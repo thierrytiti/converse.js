@@ -247,6 +247,7 @@
             keepalive: false,
             message_carbons: false,
             no_trimming: false, // Set to true for phantomjs tests (where browser apparently has no width)
+			ping_interval: 120,
             play_sounds: false,
             sounds_path: '/sounds/',
             password: undefined,
@@ -569,10 +570,13 @@
         };
 
         this.clearSession = function () {
-            this.roster.browserStorage._clear();
+            if (this.roster) {
+                this.roster.browserStorage._clear();
+            }
             this.session.browserStorage._clear();
-            var controlbox = converse.chatboxes.get('controlbox');
-            controlbox.save({'connected': false});
+            if (converse.connection.connected) {
+                converse.chatboxes.get('controlbox').save({'connected': false});
+            }
         };
 
         this.setSession = function () {
@@ -631,11 +635,35 @@
             },this), 200));
         };
 
+        this.ping = function (jid, timeout, success, error){
+            if (typeof jid === 'undefined'     || jid == null)     { jid = this.bare_jid; }
+                if (typeof timeout === 'undefined' || timeout == null) { timeout = 45; }
+                if (typeof success === 'undefined' ) { success = null; }
+                if (typeof error === 'undefined' ) { error = null; }
+                if (this.connection) this.connection.ping.ping( jid, success, error, timeout );
+        };
+
+        this.pong = function (ping){
+		    converse.connection.ping.pong(ping);
+	        return true;
+    	};
+
+	    this.registerPongHandler = function (){
+			converse.connection.ping.addPingHandler( this.pong );
+    	};
+
+	    this.registerPingHandler = function (){
+            if (this.ping_interval>0){
+		        window.setInterval( function() { converse.ping(); }, this.ping_interval*1000);
+                }
+    	};
+
         this.onReconnected = function () {
             // We need to re-register all the event handlers on the newly
             // created connection.
             this.initStatus($.proxy(function () {
                 this.registerRosterXHandler();
+                this.registerPongHandler();
                 this.registerPresenceHandler();
                 this.chatboxes.registerMessageHandler();
                 converse.xmppstatus.sendPresence();
@@ -681,6 +709,8 @@
             this.enableCarbons();
             this.initStatus($.proxy(function () {
 
+                this.registerPingHandler();
+                this.registerPongHandler();
                 this.chatboxes.onConnected();
                 this.giveFeedback(__('Contacts'));
                 if (this.callback) {
@@ -3683,6 +3713,7 @@
                             'desc_status': STATUSES[chat_status||'offline'],
                             'desc_chat': __('Click to chat with this contact'),
                             'desc_remove': __('Click to remove this contact'),
+                            'title_fullname': __('Name'),
                             'allow_contact_removal': converse.allow_contact_removal
                         })
                     ));
@@ -5330,7 +5361,9 @@
                         'label_username': __('XMPP Username:'),
                         'label_password': __('Password:'),
                         'label_anon_login': __('Click here to log in anonymously'),
-                        'label_login': __('Log In')
+                        'label_login': __('Log In'),
+                        'placeholder_username': __('user@server'),
+                        'placeholder_password': __('password')
                     })
                 ));
                 this.$tabs = cfg.$parent.parent().find('#controlbox-tabs');
@@ -5793,6 +5826,9 @@
         },
         'send': function (stanza) {
             converse.connection.send(stanza);
+        },
+        'ping': function (jid) {
+            converse.ping(jid);
         },
         'plugins': {
             'add': function (name, callback) {
