@@ -569,10 +569,13 @@
         };
 
         this.clearSession = function () {
-            this.roster.browserStorage._clear();
+            if (this.roster) {
+                this.roster.browserStorage._clear();
+            }
             this.session.browserStorage._clear();
-            var controlbox = converse.chatboxes.get('controlbox');
-            controlbox.save({'connected': false});
+            if (converse.connection.connected) {
+                converse.chatboxes.get('controlbox').save({'connected': false});
+            }
         };
 
         this.setSession = function () {
@@ -3683,6 +3686,7 @@
                             'desc_status': STATUSES[chat_status||'offline'],
                             'desc_chat': __('Click to chat with this contact'),
                             'desc_remove': __('Click to remove this contact'),
+                            'title_fullname': __('Name'),
                             'allow_contact_removal': converse.allow_contact_removal
                         })
                     ));
@@ -4625,7 +4629,7 @@
                     if (this.get('fullname') === undefined) {
                         converse.getVCard(
                             null, // No 'to' attr when getting one's own vCard
-                            $.proxy(function (jid, fullname, image, image_type, url) {
+                            $.proxy(function (iq ,jid, fullname, image, image_type, url) {
                                 this.save({'fullname': fullname});
                             }, this)
                         );
@@ -5330,7 +5334,9 @@
                         'label_username': __('XMPP Username:'),
                         'label_password': __('Password:'),
                         'label_anon_login': __('Click here to log in anonymously'),
-                        'label_login': __('Log In')
+                        'label_login': __('Log In'),
+                        'placeholder_username': __('user@server'),
+                        'placeholder_password': __('password')
                     })
                 ));
                 this.$tabs = cfg.$parent.parent().find('#controlbox-tabs');
