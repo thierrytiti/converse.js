@@ -2429,7 +2429,7 @@
                                         case "item":
                                             data.affiliation = item.getAttribute("affiliation");
                                             data.role = item.getAttribute("role");
-                                            data.jid = item.getAttribute("jid");
+                                            data.jid = Strophe.getBareJidFromJid(item.getAttribute("jid"));
                                             data.nick = item.getAttribute("nick") || data.nick;
                                             break;
                                         case "status":

@@ -5,6 +5,7 @@ Changelog
 ------------------
 
 * #144 Add Ping funcionnality and Pong Handler [thierrytiti]
+* #366 Show JIDs in non-anonymous rooms [thierrytiti]
 * #389 Allow login panel placeholders and roster item 'Name' translations. [gbonvehi]
 * #396 Add automatic Away mode and XEP-0352 support [thierrytiti]
 * #400, #410 Allow offline pretty status and placeholder for "Insert a smiley" to be translated [thierrytiti]
